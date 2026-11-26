@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Belagavi Kitchen Direct | Agents Appointment End</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --background: #f8fafc;
+      --card: #ffffff;
+      --foreground: #0f172a;
+      --muted-foreground: #475569;
+      --border: #cbd5e1;
+    }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased p-4 md:p-6">
+  <div class="max-w-6xl mx-auto space-y-5">
+
+    <!-- Header & Navigation -->
+    <header class="bg-[var(--card)] border border-[var(--border)] rounded-md p-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-md bg-emerald-700 flex items-center justify-center text-white shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h10"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-base font-bold text-[var(--foreground)] tracking-tight">Belagavi Kitchen Direct</h1>
+            <p class="text-xs text-[var(--muted-foreground)]">Agents Appointment and Rider Delivery Dispatch</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="loadAgentState()" class="px-3 py-1.5 border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-slate-100 rounded-md text-xs font-medium">
+            Refresh
+          </button>
+          <button type="button" onclick="resetSession()" class="px-3 py-1.5 border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-slate-100 rounded-md text-xs font-medium">
+            Reset Session
+          </button>
+        </div>
+      </div>
+
+      <nav class="flex flex-wrap border-t border-[var(--border)] mt-4 pt-3 gap-2" aria-label="Main Navigation">
+        <a href="/user" class="px-3.5 py-2 rounded-md text-xs font-semibold flex items-center gap-2 text-[var(--muted-foreground)] hover:bg-slate-100 hover:text-[var(--foreground)]">
+          <span>User End</span>
+        </a>
+        <a href="/agents" class="px-3.5 py-2 rounded-md text-xs font-semibold flex items-center gap-2 bg-[var(--foreground)] text-[var(--background)]">
+          <span>Agents Appointment End</span>
+          <span id="badgeQueueCount" class="px-1.5 py-0.5 rounded text-xs bg-amber-700 text-white hidden">0</span>
+        </a>
+        <a href="/admin" class="px-3.5 py-2 rounded-md text-xs font-semibold flex items-center gap-2 text-[var(--muted-foreground)] hover:bg-slate-100 hover:text-[var(--foreground)]">
+          <span>Admin End</span>
+        </a>
+      </nav>
+    </header>
+
+    <!-- Status Banner -->
+    <div id="toastNotification" role="status" aria-live="polite" class="hidden p-3 rounded-md border text-xs flex items-center justify-between">
+      <span id="toastMsg" class="font-medium"></span>
+      <button type="button" onclick="hideToast()" class="text-xs px-1.5 py-0.5 opacity-75 hover:opacity-100">Dismiss</button>
+    </div>
+
+    <!-- Main Agents Portal -->
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+      <!-- Left 7 Cols: Stage 1 (Dispatch Queue) & Stage 2 (In-Transit Delivery Confirmation) -->
+      <div class="lg:col-span-7 space-y-5">
+
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-md p-5 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border)] pb-3">
+            <div>
+              <h2 class="font-bold text-sm text-[var(--foreground)]">Stage 1: Pending Dispatch Queue (<span id="countPendingInline">0</span>)</h2>
+              <p class="text-xs text-[var(--muted-foreground)]">Min-Heap queue prioritized by express tier and arrival order.</p>
+            </div>
+            <button type="button" onclick="dispatchNextOrder()" class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs rounded-md shrink-0">
+              Dispatch Next Order
+            </button>
+          </div>
+
+          <div id="agentPQList" class="space-y-2.5 min-h-[100px]">
+            <p class="text-[var(--muted-foreground)] text-xs text-center py-6">Loading queue...</p>
+          </div>
+        </div>
+
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-md p-5 space-y-3">
+          <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+            <div>
+              <h2 class="font-bold text-sm text-[var(--foreground)]">Stage 2: Active Rider Deliveries (<span id="badgeActiveTransit">0</span>)</h2>
+              <p class="text-xs text-[var(--muted-foreground)]">Orders currently out for delivery. Confirm once handed to customer.</p>
+            </div>
+          </div>
+
+          <div id="agentActiveDeliveries" class="space-y-2.5 min-h-[100px]">
+            <p class="text-[var(--muted-foreground)] text-xs text-center py-6">No active deliveries in transit.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right 5 Cols: Delivery Fleet & Hub Distances -->
+      <div class="lg:col-span-5 space-y-5">
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-md p-5 space-y-3">
+          <div class="border-b border-[var(--border)] pb-3">
+            <h2 class="font-bold text-sm text-[var(--foreground)]">Delivery Fleet (<span id="countAvailInline">5/5</span> Available)</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Current rider locations and duty status.</p>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead class="text-[var(--muted-foreground)] border-b border-[var(--border)]">
+                <tr>
+                  <th class="py-2 px-2">Partner</th>
+                  <th class="py-2 px-2">Zone</th>
+                  <th class="py-2 px-2">Status</th>
+                  <th class="py-2 px-2 text-right">Delivered</th>
+                </tr>
+              </thead>
+              <tbody id="agentFleetTable" class="divide-y divide-[var(--border)]">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-md p-5 space-y-3">
+          <div class="border-b border-[var(--border)] pb-2">
+            <h2 class="font-bold text-sm text-[var(--foreground)]">Shortest Distances from Kitchen Hub</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Dijkstra shortest-path route lengths from Zone 0.</p>
+          </div>
+          <div id="dijkstraDistGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[var(--card)] border border-[var(--border)] rounded-md px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-[var(--muted-foreground)]">
+      <div>
+        <span class="font-semibold text-[var(--foreground)]">Belagavi Kitchen Direct</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="/privacy" class="hover:text-[var(--foreground)] underline underline-offset-2">Privacy Policy</a>
+        <a href="/terms" class="hover:text-[var(--foreground)] underline underline-offset-2">Terms and Conditions</a>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    let toastTimer = null;
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function showToast(msg, isSuccess = true) {
+      const toast = document.getElementById("toastNotification");
+      const msgBox = document.getElementById("toastMsg");
+      msgBox.textContent = msg;
+      toast.className = `p-3 rounded-md border text-xs flex items-center justify-between ${
+        isSuccess
+          ? "bg-emerald-500/10 border-emerald-700/40 text-emerald-700"
+          : "bg-red-500/10 border-red-700/40 text-red-700"
+      }`;
+      toast.classList.remove("hidden");
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(hideToast, 4500);
+    }
+
+    function hideToast() {
+      document.getElementById("toastNotification").classList.add("hidden");
+    }
+
+    async function loadAgentState() {
+      const res = await fetch("/api/agents/state");
+      const data = await res.json();
+
+      renderPendingQueue(data.pending || []);
+      renderActiveDeliveries(data.active_deliveries || []);
+      renderFleet(data.fleet || [], data.hub_distances || []);
+    }
+
+    function renderPendingQueue(pending) {
+      const container = document.getElementById("agentPQList");
+      const badge = document.getElementById("badgeQueueCount");
+      document.getElementById("countPendingInline").textContent = pending.length;
+
+      if (pending.length > 0) {
+        badge.textContent = pending.length;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
+
+      if (pending.length === 0) {
+        container.innerHTML = `<p class="text-[var(--muted-foreground)] text-xs text-center py-6">No pending orders in queue.</p>`;
+        return;
+      }
+
+      container.innerHTML = pending.map((ord, idx) => `
+        <div class="p-3 rounded-md border ${idx === 0 ? "border-emerald-700 bg-emerald-500/5" : "border-[var(--border)] bg-[var(--background)]"} text-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-sm text-[var(--foreground)]">#${ord.order_id}</span>
+              <span class="px-1.5 py-0.5 rounded text-xs font-semibold ${ord.is_vip ? "bg-amber-700 text-white" : "bg-slate-200 text-slate-900"}">
+                ${ord.is_vip ? "EXPRESS" : "STANDARD"}
+              </span>
+              ${idx === 0 ? '<span class="text-xs font-bold text-emerald-700">Next for Dispatch</span>' : ''}
+            </div>
+            <div class="text-[var(--muted-foreground)] mt-1">
+              ${escapeHtml(ord.customer_name)} | ${escapeHtml(ord.delivery_address)}
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="mono font-bold text-[var(--foreground)] text-xs">Rs. ${Number(ord.total_amount).toFixed(2)}</div>
+            <div class="text-xs text-[var(--muted-foreground)]">Priority Score: ${ord.priority_score}</div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderActiveDeliveries(active) {
+      const container = document.getElementById("agentActiveDeliveries");
+      document.getElementById("badgeActiveTransit").textContent = active.length;
+
+      if (active.length === 0) {
+        container.innerHTML = `<p class="text-[var(--muted-foreground)] text-xs text-center py-6">No active deliveries in transit.</p>`;
+        return;
+      }
+
+      container.innerHTML = active.map(ord => `
+        <div class="p-3 rounded-md border border-[var(--border)] bg-[var(--background)] text-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-sm text-[var(--foreground)]">#${ord.order_id}</span>
+              <span class="px-2 py-0.5 rounded text-xs font-semibold bg-amber-700 text-white">OUT FOR DELIVERY</span>
+              <span class="text-xs text-[var(--muted-foreground)]">Route: ${ord.delivery_dist_km} km</span>
+            </div>
+            <div class="text-[var(--muted-foreground)] mt-1">
+              Rider: <strong class="text-[var(--foreground)]">${escapeHtml(ord.assigned_agent_name)}</strong> | Customer: <strong class="text-[var(--foreground)]">${escapeHtml(ord.customer_name)}</strong>
+            </div>
+            <div class="text-xs text-[var(--foreground)] font-medium mt-1">
+              Address: ${escapeHtml(ord.delivery_address)}
+            </div>
+          </div>
+          <button type="button" onclick="markOrderDelivered(${ord.order_id})" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs rounded-md shrink-0">
+            Mark Delivered
+          </button>
+        </div>
+      `).join("");
+    }
+
+    function renderFleet(fleet, hubDistances) {
+      const tbody = document.getElementById("agentFleetTable");
+      let availCount = 0;
+
+      tbody.innerHTML = fleet.map(ag => {
+        if (ag.available) availCount++;
+        return `
+          <tr>
+            <td class="py-2 px-2">
+              <div class="font-semibold text-[var(--foreground)]">${escapeHtml(ag.name)}</div>
+              <div class="mono text-xs text-[var(--muted-foreground)]">ID ${ag.id}</div>
+            </td>
+            <td class="py-2 px-2 text-[var(--foreground)]">Zone ${ag.zone}</td>
+            <td class="py-2 px-2">
+              ${ag.available
+                ? '<span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/15 text-emerald-700">Available</span>'
+                : `<span class="px-2 py-0.5 rounded text-xs font-semibold bg-amber-500/15 text-amber-700">Busy (#${ag.active_order_id})</span>`}
+            </td>
+            <td class="py-2 px-2 text-right font-semibold text-[var(--foreground)]">${ag.completed}</td>
+          </tr>
+        `;
+      }).join("");
+
+      document.getElementById("countAvailInline").textContent = `${availCount}/${fleet.length}`;
+
+      const distGrid = document.getElementById("dijkstraDistGrid");
+      distGrid.innerHTML = hubDistances.map(d => {
+        const shortName = (d.name.split(":")[1] || d.name).trim();
+        return `
+          <div class="p-2 rounded-md border border-[var(--border)] bg-[var(--background)] flex justify-between items-center">
+            <span class="text-[var(--muted-foreground)]">${escapeHtml(shortName)} (Z${d.zone})</span>
+            <span class="mono font-semibold text-[var(--foreground)]">${d.km} km</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function dispatchNextOrder() {
+      const res = await fetch("/api/agents/dispatch", { method: "POST" });
+      const data = await res.json();
+      if (data.ok) {
+        showToast(data.message, true);
+        await loadAgentState();
+      } else {
+        showToast(data.error || "Dispatch failed.", false);
+      }
+    }
+
+    async function markOrderDelivered(orderId) {
+      const res = await fetch("/api/agents/deliver", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_id: orderId })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast(data.message, true);
+        await loadAgentState();
+      } else {
+        showToast(data.error || "Could not mark delivered.", false);
+      }
+    }
+
+    async function resetSession() {
+      await fetch("/api/reset", { method: "POST" });
+      await loadAgentState();
+      showToast("Session reset.", true);
+    }
+
+    window.onload = async () => {
+      await loadAgentState();
+      setInterval(loadAgentState, 5000);
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Belagavi Kitchen Direct | Ordering &amp; Dispatch</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2315803d'/%3E%3Cpath d='M9 11h14M9 16h14M9 21h9' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --background: #f8fafc;
+      --card: #ffffff;
+      --foreground: #0f172a;
+      --muted-foreground: #475569;
+      --border: #cbd5e1;
+    }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased p-4 md:p-6">
+  <div class="max-w-6xl mx-auto space-y-5">
+
+    <!-- Header & Navigation -->
+    <header class="bg-[var(--card)] border border-[var(--border)] rounded-md p-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-md bg-emerald-700 flex items-center justify-center text-white shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h10"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-base font-bold text-[var(--foreground)] tracking-tight">Belagavi Kitchen Direct</h1>
+            <p class="text-xs text-[var(--muted-foreground)]">Ordering, Rider Dispatch, and Catalog Administration</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="resetSystem()" class="px-3 py-1.5 border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--border)]/30 rounded-md text-xs font-medium">
+            Reset Session
+          </button>
+        </div>
+      </div>
+
+      <nav class="flex flex-wrap border-t border-[var(--border)] mt-4 pt-3 gap-2" aria-label="Main Navigation">
+        <button type="button" id="tabBtn-user" onclick="switchPage('user')" class="page-tab px-3.5 py-2 rounded-md text-xs font-semibold flex items-center gap-2 bg-[var(--foreground)] text-[var(--background)]">
+          <span>User End</span>
+          <span id="badgeCartCount" class="px-1.5 py-0.5 rounded text-xs bg-emerald-700 text-white hidden">0</span>
+        </button>
+
+        <button type="button" id="tabBtn-agents" onclick="switchPage('agents')" class="page-tab px-3.5 py-2 rounded-md text-xs font-semibold flex items-center gap-2 text-[var(--muted-foreground)] hover:bg-[var(--border)]/40 hover:text-[var(--foreground)]">
+          <span>Agents Appointment End</span>
+          <span id="badgeQueueCount" class="px-1.5 py-0.5 rounded text-xs bg-amber-700 text-white hidden">0</span>
+        </button>
+
+        <button type="button" id="tabBtn-admin" onclick="switchPage('admin')" class="page-tab px-3.5 py-2 rounded-md text-xs font-semibold flex items-center gap-2 text-[var(--muted-foreground)] hover:bg-[var(--border)]/40 hover:text-[var(--foreground)]">
+          <span>Admin End</span>
+          <span id="badgeHistoryCount" class="px-1.5 py-0.5 rounded text-xs bg-emerald-700 text-white hidden">0</span>
+        </button>
+      </nav>
+    </header>
+
+    <!-- Status Notice Banner -->
+    <div id="toastNotification" role="status" aria-live="polite" class="hidden p-3 rounded-md border text-xs flex items-center justify-between">
+      <span id="toastMsg" class="font-medium"></span>
+      <button type="button" onclick="hideToast()" class="text-xs px-1.5 py-0.5 opacity-75 hover:opacity-100" aria-label="Dismiss notification">Dismiss</button>
+    </div>
+
+    <!-- ================================================================================== -->
+    <!-- PAGE 1: USER END                                                                   -->
+    <!-- ================================================================================== -->
+    <main id="page-user" class="space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+        <!-- Menu & Order Tracking -->
+        <div class="lg:col-span-2 space-y-5">
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-md p-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <h2 class="font-bold text-sm text-[var(--foreground)]">Menu</h2>
+                <p class="text-xs text-[var(--muted-foreground)]">Select dishes to add to your order.</p>
+              </div>
+              <div>
+                <label for="menuFilter" class="sr-only">Filter menu</label>
+                <input type="text" id="menuFilter" oninput="filterMenu()" placeholder="Filter by dish or category..." class="w-full sm:w-56 px-3 py-1.5 text-xs bg-[var(--background)] border border-[var(--border)] rounded-md focus:outline-none focus:border-emerald-700">
+              </div>
+            </div>
+
+            <div id="userMenuGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Populated by renderUserMenu() -->
+            </div>
+          </div>
+
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-md p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h2 class="font-bold text-sm text-[var(--foreground)]">Track Order</h2>
+                <p class="text-xs text-[var(--muted-foreground)]">Enter your Order ID to view live preparation and delivery status.</p>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <label for="userTrackInput" class="sr-only">Order ID</label>
+              <input type="number" id="userTrackInput" placeholder="Order ID (e.g. 1001)" class="flex-1 px-3 py-2 text-xs bg-[var(--background)] border border-[var(--border)] rounded-md focus:outline-none focus:border-emerald-700">
+              <button type="button" onclick="trackOrderCustomer()" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-md">
+                Check Status
+              </button>
+            </div>
+            <div id="userTrackResult" class="mt-3 p-3 rounded-md border border-[var(--border)] bg-[var(--background)] text-xs text-[var(--muted-foreground)] min-h-[60px]">
+              Enter an Order ID above to view its status.
+            </div>
+          </div>
+        </div>
+
+        <!-- Cart & Checkout -->
+        <div class="space-y-5">
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-md p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+              <h2 class="font-bold text-sm text-[var(--foreground)]">Current Cart</h2>
+              <button type="button" onclick="undoCart()" id="btnUserUndo" disabled class="px-2.5 py-1 text-xs border border-[var(--border)] rounded-md text-[var(--muted-foreground)] opacity-50 cursor-not-allowed hover:bg-[var(--border)]/30">
+                Undo Last Item
+              </button>
+            </div>
+
+            <div id="userCartItems" class="space-y-2 min-h-[100px] max-h-[220px] overflow-y-auto">
+              <p class="text-[var(--muted-foreground)] text-xs text-center py-6">No items in cart.</p>
+            </div>
+
+            <div class="border-t border-[var(--border)] pt-3 space-y-1.5 text-xs">
+              <div class="flex justify-between text-[var(--muted-foreground)]">
+                <span>Items Subtotal</span>
+                <span id="userCartSubtotal" class="mono text-[var(--foreground)]">Rs. 0.00</span>
+              </div>
+              <div class="flex justify-between text-[var(--muted-foreground)]">
+                <span>Express Priority Handling</span>
+                <span id="userCartVipFee" class="mono text-[var(--foreground)]">Rs. 0.00</span>
+              </div>
+              <div class="flex justify-between text-sm font-bold border-t border-[var(--border)] pt-2">
+                <span>Total</span>
+                <span id="userCartGrandTotal" class="mono text-[var(--foreground)]">Rs. 0.00</span>
+              </div>
+            </div>
+
+            <form onsubmit="placeOrderFromCustomerPage(event)" class="border-t border-[var(--border)] pt-4 space-y-3">
+              <div>
+                <label for="userCustName" class="block text-xs font-semibold mb-1 text-[var(--foreground)]">Full Name</label>
+                <input type="text" id="userCustName" required placeholder="Enter your full name" class="w-full px-3 py-2 text-xs bg-[var(--background)] border border-[var(--border)] rounded-md focus:outline-none focus:border-emerald-700">
+              </div>
+
+              <div>
+                <label for="userAddress" class="block text-xs font-semibold mb-1 text-[var(--foreground)]">Delivery Address</label>
+                <input type="text" id="userAddress" required placeholder="House/Flat no., street, area, landmark" class="w-full px-3 py-2 text-xs bg-[var(--background)] border border-[var(--border)] rounded-md focus:outline-none focus:border-emerald-700">
+              </div>
+
+              <div class="p-2.5 rounded-md border border-[var(--border)] bg-[var(--background)]">
+                <label class="flex items-start gap-2.5 cursor-pointer">
+                  <input type="checkbox" id="userVipToggle" onchange="updateCartTotals()" class="mt-0.5 rounded border-[var(--border)]">
+                  <div>
+                    <span class="text-xs font-semibold text-[var(--foreground)] block">Express Priority Dispatch (+Rs. 30.00)</span>
+                    <span class="text-xs text-[var(--muted-foreground)] block">Places your order ahead of standard queue items.</span>
+                  </div>
+                </label>
+              </div>
+
+              <button type="submit" class="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs rounded-md">
+                Place Order
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- ================================================================================== -->
+    <!-- PAGE 2: AGENTS APPOINTMENT END                                                     -->
+    <!-- ================================================================================== -->
+    <section id="page-agents" class="hidden space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+        <!-- Left 7 Cols: Stage 1 (Dispatch Queue) & Stage 2 (In-Transit Delivery Confirmation) -->
+        <div class="lg:col-span-7 space-y-5">
+
+          <!-- Stage 1: Pending Orders -->
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-md p-5 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border)] pb-3">
+              <div>
+                <h2 class="font-bold text-sm text-[var(--foreground)]">Stage 1: Pending Dispatch Queue (<span id="countPendingInline">0</span>)</h2>
+                <p class="text-xs text-[var(--muted-foreground)]">Min-Heap queue prioritized by express tier and arrival order.</p>
+              </div>
+              <button type="button" onclick="dispatchNextOrder()" class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs rounded-md shrink-0">
+                Dispatch Next Order
+              </button>
+            </div>
+
+            <div id="agentPQList" class="space-y-2.5 min-h-[100px]">
+              <p class="text-[var(--muted-foreground)] text-xs text-center py-6">No pending orders in queue.</p>
+            </div>
+          </div>
+
+          <!-- Stage 2: In-Transit Rider Deliveries -->
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-md p-5 space-y-3">
+            <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+              <div>
+                <h2 class="font-bold text-sm text-[var(--foreground)]">Stage 2: Active Rider Deliveries (<span id="badgeActiveTransit">0</span>)</h2>
+                <p class="text-xs text-[var(--muted-foreground)]">Orders currently out for delivery. Confirm once handed to customer.</p>
+              </div>
+            </div>
+
+            <div id="agentActiveDeliveries" class="space-y-2.5 min-h-[100px]">
+              <p class="text-[var(--muted-foreground)] text-xs text-center py-6">No active deliveries in transit.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right 5 Cols: Delivery Fleet & Hub Distances -->
+        <div class="lg:col-span-5 space-y-5">
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-md p-5 space-y-3">
+            <div class="border-b border-[var(--border)] pb-3">
+              <h2 class="font-bold text-sm text-[var(--foreground)]">Delivery Fleet (<span id="countAvailInline">5/5</span> Available)</h2>
+              <p class="text-xs text-[var(--muted-foreground)]">Current rider locations and duty status.</p>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-left">
+                <thead class="text-[var(--muted-foreground)] border-b border-[var(--border)]">
+                  <tr>
+                    <th class="py-2 px-2">Partner</th>
+                    <th class="py-2 px-2">Zone</th>
+                    <th class="py-2 px-2">Status</th>
+                    <th class="py-2 px-2 text-right">Delivered</th>
+                  </tr>
+                </thead>
+                <tbody id="agentFleetTable" class="divide-y divide-[var(--border)]">
+                  <!-- Populated by renderAgentFleet() -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-md p-5 space-y-3">
+            <div class="border-b border-[var(--border)] pb-2">
+              <h2 class="font-bold text-sm text-[var(--foreground)]">Shortest Distances from Kitchen Hub</h2>
+              <p class="text-xs text-[var(--muted-foreground)]">Dijkstra shortest-path route lengths from Zone 0.</p>
+            </div>
+            <div id="dijkstraDistGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <!-- Populated by renderAgentFleet() -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================================================================================== -->
+    <!-- PAGE 3: ADMIN END                                                                  -->
+    <!-- ================================================================================== -->
+    <section id="page-admin" class="hidden space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+        <!-- Left 6 Cols: Menu Catalog BST Management -->
+        <div class="lg:col-span-6 space-y-4">
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-md p-5 space-y-4">
+            <div class="border-b border-[var(--border)] pb-3">
+              <h2 class="font-bold text-sm text-[var(--foreground)]">Catalog Management</h2>
+              <p class="text-xs text-[var(--muted-foreground)]">Add new items to the menu catalog (Binary Search Tree by Item ID).</p>
+            </div>
+
+            <form onsubmit="adminAddDish(event)" class="space-y-3">
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label for="adminItemId" class="block text-xs font-semibold mb-1">Item ID</label>
+                  <input type="number" id="adminItemId" min="1" placeholder="e.g. 108" required class="w-full px-3 py-2 text-xs bg-[var(--background)] border border-[var(--border)] rounded-md focus:outline-none focus:border-emerald-700">
+                </div>
+                <div>
+                  <label for="adminItemPrice" class="block text-xs font-semibold mb-1">Price (Rs.)</label>
+                  <input type="number" step="0.50" min="1" id="adminItemPrice" placeholder="e.g. 120.00" required class="w-full px-3 py-2 text-xs bg-[var(--background)] border border-[var(--border)] rounded-md focus:outline-none focus:border-emerald-700">
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label for="adminItemName" class="block text-xs font-semibold mb-1">Dish Name</label>
+                  <input type="text" id="adminItemName" placeholder="e.g. Mysore Pak" required class="w-full px-3 py-2 text-xs bg-[var(--background)] border border-[var(--border)] rounded-md focus:outline-none focus:border-emerald-700">
+                </div>
+                <div>
+                  <label for="adminItemCat" class="block text-xs font-semibold mb-1">Category</label>
+                  <input type="text" id="adminItemCat" placeholder="e.g. Desserts" required class="w-full px-3 py-2 text-xs bg-[var(--background)] border border-[var(--border)] rounded-md focus:outline-none focus:border-emerald-700">
+                </div>
+              </div>
+              <button type="submit" class="w-full py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs rounded-md">
+                Add Item to Catalog
+              </button>
+            </form>
+
+            <div class="border-t border-[var(--border)] pt-3">
+              <h3 class="text-xs font-semibold text-[var(--muted-foreground)] mb-2">Active Catalog Items (Inorder)</h3>
+              <div id="adminBstList" class="space-y-1.5 max-h-[300px] overflow-y-auto text-xs">
+                <!-- Populated by renderAdminBstList() -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right 6 Cols: Delivered Orders History (DLL) -->
+        <div class="lg:col-span-6 space-y-4">
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-md p-5 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border)] pb-3">
+              <div>
+                <h2 class="font-bold text-sm text-[var(--foreground)]">Delivered Order History</h2>
+                <p class="text-xs text-[var(--muted-foreground)]">Completed deliveries stored in a Doubly Linked List.</p>
+              </div>
+              <div class="flex gap-1.5">
+                <button type="button" onclick="renderAdminHistory(false)" id="btnAdminHistFwd" class="px-2.5 py-1 text-xs rounded-md font-medium bg-[var(--foreground)] text-[var(--background)]">
+                  Oldest First
+                </button>
+                <button type="button" onclick="renderAdminHistory(true)" id="btnAdminHistRev" class="px-2.5 py-1 text-xs rounded-md font-medium border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+                  Newest First
+                </button>
+              </div>
+            </div>
+
+            <div id="adminHistoryList" class="space-y-2.5 min-h-[200px] max-h-[420px] overflow-y-auto">
+              <p class="text-[var(--muted-foreground)] text-xs text-center py-12">No completed deliveries recorded yet.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================================================================================== -->
+    <!-- PAGE 4: PRIVACY POLICY                                                             -->
+    <!-- ================================================================================== -->
+    <section id="page-privacy" class="hidden">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-md p-6 space-y-4">
+        <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+          <div>
+            <h2 class="text-base font-bold text-[var(--foreground)]">Privacy Policy</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Effective Date: November 12, 2026</p>
+          </div>
+          <button type="button" onclick="switchPage('user')" class="px-3 py-1.5 border border-[var(--border)] rounded-md text-xs font-medium hover:bg-[var(--border)]/30">
+            Back to Ordering
+          </button>
+        </div>
+
+        <div class="space-y-3 text-xs text-[var(--foreground)] leading-relaxed">
+          <div>
+            <h3 class="font-bold text-sm mb-1">1. Information We Collect</h3>
+            <p class="text-[var(--muted-foreground)]">When you place an order through Belagavi Kitchen Direct, we collect only the information required to prepare and deliver your meal: your full name, delivery street address, landmark details, and selected food items.</p>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm mb-1">2. How We Use Your Information</h3>
+            <p class="text-[var(--muted-foreground)]">Your name and address are shared solely with the assigned delivery rider and kitchen dispatch staff to calculate delivery routes and hand over your order accurately. We do not sell, rent, or distribute customer details to third-party advertisers.</p>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm mb-1">3. Data Retention</h3>
+            <p class="text-[var(--muted-foreground)]">Order records are retained in the active session history for order verification, delivery confirmation, and accounting audits. Resetting or closing the local session clears transient order records.</p>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm mb-1">4. Contact</h3>
+            <p class="text-[var(--muted-foreground)]">For privacy inquiries or requests to correct order details, contact support at support@belagavikitchendirect.in.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================================== -->
+    <!-- PAGE 5: TERMS AND CONDITIONS                                                       -->
+    <!-- ================================================================================== -->
+    <section id="page-terms" class="hidden">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-md p-6 space-y-4">
+        <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+          <div>
+            <h2 class="text-base font-bold text-[var(--foreground)]">Terms and Conditions</h2>
+            <p class="text-xs text-[var(--muted-foreground)]">Effective Date: November 12, 2026</p>
+          </div>
+          <button type="button" onclick="switchPage('user')" class="px-3 py-1.5 border border-[var(--border)] rounded-md text-xs font-medium hover:bg-[var(--border)]/30">
+            Back to Ordering
+          </button>
+        </div>
+
+        <div class="space-y-3 text-xs text-[var(--foreground)] leading-relaxed">
+          <div>
+            <h3 class="font-bold text-sm mb-1">1. Order Placement and Pricing</h3>
+            <p class="text-[var(--muted-foreground)]">All menu prices are listed in Indian Rupees (Rs.). Express priority dispatch adds a flat Rs. 30.00 handling fee to prioritize preparation and rider assignment ahead of standard queue orders.</p>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm mb-1">2. Delivery Address Accuracy</h3>
+            <p class="text-[var(--muted-foreground)]">Customers are responsible for providing an accurate street address, flat number, and landmark. Delivery riders follow the shortest computed route from the Central Kitchen Hub to the specified destination area.</p>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm mb-1">3. Dispatch and Delivery Confirmation</h3>
+            <p class="text-[var(--muted-foreground)]">Orders move through three states: Queued, Out for Delivery (upon rider dispatch), and Delivered (confirmed by the rider upon handover). Once an order is dispatched to a rider, modifications to the cart or destination cannot be applied.</p>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm mb-1">4. Service Availability</h3>
+            <p class="text-[var(--muted-foreground)]">Dispatch depends on available delivery partners. During peak demand when all riders are assigned active deliveries, orders remain safely queued in priority order until the next rider becomes available.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Site Footer -->
+    <footer class="bg-[var(--card)] border border-[var(--border)] rounded-md px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-[var(--muted-foreground)]">
+      <div>
+        <span class="font-semibold text-[var(--foreground)]">Belagavi Kitchen Direct</span>
+        <span class="mx-2">|</span>
+        <span>Target Domain: <span class="mono text-[var(--foreground)]">orders.belagavikitchendirect.in</span> (Pending DNS connection)</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <button type="button" onclick="switchPage('privacy')" class="hover:text-[var(--foreground)] underline underline-offset-2">
+          Privacy Policy
+        </button>
+        <button type="button" onclick="switchPage('terms')" class="hover:text-[var(--foreground)] underline underline-offset-2">
+          Terms and Conditions
+        </button>
+      </div>
+    </footer>
+
+  </div>
+
+  <script>
+    /* ==================================================================================
+     * SYSTEM DATA STRUCTURES
+     * ================================================================================== */
+    const MAX_ZONES = 6;
+    const HASH_SIZE = 23;
+    const INF = 9999;
+
+    const zone_names = [
+      "Zone 0: Central Kitchen Hub (RPD Cross)",
+      "Zone 1: Tilakwadi",
+      "Zone 2: Shahapur",
+      "Zone 3: Vadgaon",
+      "Zone 4: Sadashiv Nagar",
+      "Zone 5: Udyambag Industrial Area"
+    ];
+
+    const city_graph = [
+      [ 0, 2, 4, 0, 6, 5 ],
+      [ 2, 0, 3, 4, 0, 3 ],
+      [ 4, 3, 0, 2, 5, 0 ],
+      [ 0, 4, 2, 0, 0, 4 ],
+      [ 6, 0, 5, 0, 0, 7 ],
+      [ 5, 3, 0, 4, 7, 0 ]
+    ];
+
+    let menu_items = [];
+    let userCart = [];
+    let undoStack = [];
+    let orderPQ = [];
+    let activeDeliveries = [];
+    let orderHistoryDLL = [];
+    let orderHashTable = [];
+    let nextOrderId = 1001;
+    let arrivalCounter = 1;
+    let agents = [];
+    let historyReverse = false;
+    let toastTimer = null;
+
+    function initDefaultData() {
+      menu_items = [
+        { id: 101, name: "Filter Coffee", cat: "Beverages", price: 30.00 },
+        { id: 102, name: "Idli Vada Combo", cat: "South Indian", price: 55.00 },
+        { id: 103, name: "Rava Upma", cat: "South Indian", price: 45.00 },
+        { id: 104, name: "Masala Dosa", cat: "South Indian", price: 70.00 },
+        { id: 105, name: "Veg Biryani", cat: "Main Course", price: 150.00 },
+        { id: 106, name: "Paneer Butter Masala", cat: "North Indian", price: 180.00 },
+        { id: 107, name: "Belagavi Kunda", cat: "Desserts", price: 95.00 }
+      ];
+
+      agents = [
+        { id: 201, name: "Ramesh Patil", zone: 1, available: true, completed: 0, activeOrderId: null },
+        { id: 202, name: "Suresh Kulkarni", zone: 2, available: true, completed: 0, activeOrderId: null },
+        { id: 203, name: "Kiran Joshi", zone: 3, available: true, completed: 0, activeOrderId: null },
+        { id: 204, name: "Anand Desai", zone: 5, available: true, completed: 0, activeOrderId: null },
+        { id: 205, name: "Mahesh Hegde", zone: 4, available: true, completed: 0, activeOrderId: null }
+      ];
+
+      userCart = [];
+      undoStack = [];
+      orderPQ = [];
+      activeDeliveries = [];
+      orderHistoryDLL = [];
+      orderHashTable = new Array(HASH_SIZE).fill(null);
+      nextOrderId = 1001;
+      arrivalCounter = 1;
+      historyReverse = false;
+    }
+
+    /* ==================================================================================
+     * NAVIGATION & NOTIFICATIONS
+     * ================================================================================== */
+    function switchPage(pageKey) {
+      const allPages = ['user', 'agents', 'admin', 'privacy', 'terms'];
+      const navTabs = ['user', 'agents', 'admin'];
+
+      allPages.forEach(p => {
+        const el = document.getElementById(`page-${p}`);
+        if (el) {
+          if (p === pageKey) {
+            el.classList.remove('hidden');
+          } else {
+            el.classList.add('hidden');
+          }
+        }
+      });
+
+      navTabs.forEach(t => {
+        const btn = document.getElementById(`tabBtn-${t}`);
+        if (btn) {
+          if (t === pageKey) {
+            btn.className = "page-tab px-3.5 py-2 rounded-md text-xs font-semibold flex items-center gap-2 bg-[var(--foreground)] text-[var(--background)]";
+          } else {
+            btn.className = "page-tab px-3.5 py-2 rounded-md text-xs font-semibold flex items-center gap-2 text-[var(--muted-foreground)] hover:bg-[var(--border)]/40 hover:text-[var(--foreground)]";
+          }
+        }
+      });
+
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+
+    function showToast(msg, isSuccess = true) {
+      const toast = document.getElementById("toastNotification");
+      const msgBox = document.getElementById("toastMsg");
+      if (!toast || !msgBox) return;
+
+      msgBox.textContent = msg;
+      toast.className = `p-3 rounded-md border text-xs flex items-center justify-between ${
+        isSuccess
+          ? "bg-emerald-500/10 border-emerald-700/40 text-emerald-700"
+          : "bg-red-500/10 border-red-700/40 text-red-700"
+      }`;
+      toast.classList.remove("hidden");
+
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(hideToast, 4500);
+    }
+
+    function hideToast() {
+      const toast = document.getElementById("toastNotification");
+      if (toast) toast.classList.add("hidden");
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    /* ==================================================================================
+     * DIJKSTRA & ADDRESS ROUTING ENGINE
+     * ================================================================================== */
+    function computeDijkstra(src) {
+      const dist = new Array(MAX_ZONES).fill(INF);
+      const visited = new Array(MAX_ZONES).fill(false);
+      dist[src] = 0;
+
+      for (let count = 0; count < MAX_ZONES - 1; count++) {
+        let min_d = INF;
+        let u = -1;
+        for (let v = 0; v < MAX_ZONES; v++) {
+          if (!visited[v] && dist[v] <= min_d) {
+            min_d = dist[v];
+            u = v;
+          }
+        }
+        if (u === -1) break;
+        visited[u] = true;
+
+        for (let v = 0; v < MAX_ZONES; v++) {
+          if (!visited[v] && city_graph[u][v] !== 0 && dist[u] !== INF && dist[u] + city_graph[u][v] < dist[v]) {
+            dist[v] = dist[u] + city_graph[u][v];
+          }
+        }
+      }
+      return dist;
+    }
+
+    function resolveZoneFromAddress(address) {
+      const lower = (address || "").toLowerCase();
+      if (lower.includes("tilakwadi") || lower.includes("rpd") || lower.includes("congress")) return 1;
+      if (lower.includes("shahapur") || lower.includes("nath pai") || lower.includes("khade")) return 2;
+      if (lower.includes("vadgaon") || lower.includes("angol") || lower.includes("madhavpur")) return 3;
+      if (lower.includes("sadashiv") || lower.includes("shrinagar") || lower.includes("hindwadi")) return 4;
+      if (lower.includes("udyambag") || lower.includes("industrial") || lower.includes("machhe")) return 5;
+
+      let hash = 0;
+      for (let i = 0; i < address.length; i++) {
+        hash = (hash * 31 + address.charCodeAt(i)) % (MAX_ZONES - 1);
+      }
+      return (hash % (MAX_ZONES - 1)) + 1;
+    }
+
+    /* ==================================================================================
+     * USER END: MENU, CART, UNDO STACK, CHECKOUT, TRACKING
+     * ================================================================================== */
+    function renderUserMenu(filterText = "") {
+      const grid = document.getElementById("userMenuGrid");
+      const q = filterText.trim().toLowerCase();
+      const filtered = menu_items.filter(m =>
+        m.name.toLowerCase().includes(q) ||
+        m.cat.toLowerCase().includes(q) ||
+        String(m.id).includes(q)
+      );
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<p class="col-span-2 text-xs text-[var(--muted-foreground)] text-center py-6">No items match "${escapeHtml(filterText)}".</p>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(item => `
+        <div class="p-3 rounded-md border border-[var(--border)] bg-[var(--background)] flex justify-between items-center gap-3">
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-semibold text-xs text-[var(--foreground)]">${escapeHtml(item.name)}</span>
+              <span class="mono text-xs text-[var(--muted-foreground)]">#${item.id}</span>
+            </div>
+            <div class="text-xs text-[var(--muted-foreground)]">${escapeHtml(item.cat)}</div>
+            <div class="mono text-xs font-semibold text-[var(--foreground)] mt-1">Rs. ${item.price.toFixed(2)}</div>
+          </div>
+          <button type="button" onclick="addToCartUser(${item.id})" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-md text-xs font-medium shrink-0">
+            Add
+          </button>
+        </div>
+      `).join("");
+    }
+
+    function filterMenu() {
+      const input = document.getElementById("menuFilter");
+      renderUserMenu(input ? input.value : "");
+    }
+
+    function addToCartUser(id, qty = 1) {
+      const item = menu_items.find(m => m.id === id);
+      if (!item || qty <= 0) return;
+
+      const existing = userCart.find(c => c.id === id);
+      if (existing) {
+        existing.qty += qty;
+      } else {
+        userCart.push({ id: item.id, name: item.name, qty: qty, price: item.price });
+      }
+      undoStack.push({ id: id, name: item.name, qty: qty });
+      showToast(`Added ${item.name} to cart.`);
+      renderUserCart();
+    }
+
+    function undoCart() {
+      if (undoStack.length === 0) return;
+      const action = undoStack.pop();
+      const existing = userCart.find(c => c.id === action.id);
+      if (existing) {
+        existing.qty -= action.qty;
+        if (existing.qty <= 0) {
+          userCart = userCart.filter(c => c.id !== action.id);
+        }
+        showToast(`Removed ${action.qty} x ${action.name} from cart.`);
+      }
+      renderUserCart();
+    }
+
+    function renderUserCart() {
+      const container = document.getElementById("userCartItems");
+      const btnUndo = document.getElementById("btnUserUndo");
+      const badge = document.getElementById("badgeCartCount");
+
+      const totalCount = userCart.reduce((sum, i) => sum + i.qty, 0);
+      if (totalCount > 0) {
+        badge.textContent = totalCount;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
+
+      if (undoStack.length > 0) {
+        btnUndo.disabled = false;
+        btnUndo.classList.remove("opacity-50", "cursor-not-allowed");
+      } else {
+        btnUndo.disabled = true;
+        btnUndo.classList.add("opacity-50", "cursor-not-allowed");
+      }
+
+      if (userCart.length === 0) {
+        container.innerHTML = `<p class="text-[var(--muted-foreground)] text-xs text-center py-6">No items in cart.</p>`;
+        updateCartTotals();
+        return;
+      }
+
+      container.innerHTML = userCart.map(item => `
+        <div class="flex justify-between items-center py-1.5 border-b border-[var(--border)] last:border-0 text-xs">
+          <div>
+            <div class="font-medium text-[var(--foreground)]">${escapeHtml(item.name)}</div>
+            <div class="text-xs text-[var(--muted-foreground)]">Rs. ${item.price.toFixed(2)} x ${item.qty}</div>
+          </div>
+          <div class="mono text-[var(--foreground)] font-semibold">Rs. ${(item.price * item.qty).toFixed(2)}</div>
+        </div>
+      `).join("");
+
+      updateCartTotals();
+    }
+
+    function updateCartTotals() {
+      const itemsTotal = userCart.reduce((sum, item) => sum + item.qty * item.price, 0);
+      const isVip = document.getElementById("userVipToggle").checked;
+      const vipFee = isVip ? 30.00 : 0.00;
+      const grandTotal = itemsTotal + vipFee;
+
+      document.getElementById("userCartSubtotal").textContent = `Rs. ${itemsTotal.toFixed(2)}`;
+      document.getElementById("userCartVipFee").textContent = `Rs. ${vipFee.toFixed(2)}`;
+      document.getElementById("userCartGrandTotal").textContent = `Rs. ${grandTotal.toFixed(2)}`;
+    }
+
+    function placeOrderFromCustomerPage(event) {
+      if (event) event.preventDefault();
+
+      if (userCart.length === 0) {
+        showToast("Cart is empty. Add at least one item before placing an order.", false);
+        return;
+      }
+
+      const nameInput = document.getElementById("userCustName");
+      const addrInput = document.getElementById("userAddress");
+      const cname = nameInput.value.trim();
+      const addr = addrInput.value.trim();
+
+      if (!cname) {
+        showToast("Please enter your full name.", false);
+        nameInput.focus();
+        return;
+      }
+      if (!addr) {
+        showToast("Please enter your delivery street address.", false);
+        addrInput.focus();
+        return;
+      }
+
+      const zone = resolveZoneFromAddress(addr);
+      const isVip = document.getElementById("userVipToggle").checked;
+      const itemsTotal = userCart.reduce((sum, item) => sum + item.qty * item.price, 0);
+      const grandTotal = itemsTotal + (isVip ? 30.00 : 0.00);
+
+      const ordId = nextOrderId++;
+      const priorityScore = (isVip ? 100 : 1000) + (arrivalCounter++);
+
+      const newOrder = {
+        orderId: ordId,
+        customerName: cname,
+        deliveryAddress: addr,
+        destZone: zone,
+        isVip: isVip,
+        priorityScore: priorityScore,
+        totalAmount: grandTotal,
+        status: "QUEUED",
+        agentId: -1,
+        agentName: "Unassigned",
+        deliveryDist: 0,
+        items: userCart.map(i => ({ ...i }))
+      };
+
+      userCart = [];
+      undoStack = [];
+      renderUserCart();
+
+      orderPQ.push(newOrder);
+      orderPQ.sort((a, b) => a.priorityScore - b.priorityScore);
+
+      let idx = ordId % HASH_SIZE;
+      const startIdx = idx;
+      while (orderHashTable[idx] !== null) {
+        idx = (idx + 1) % HASH_SIZE;
+        if (idx === startIdx) {
+          showToast("Order storage limit reached in current session. Please reset.", false);
+          return;
+        }
+      }
+      orderHashTable[idx] = newOrder;
+
+      renderAgentPQ();
+      showToast(`Order #${ordId} placed (${isVip ? "Express Priority" : "Standard"}).`);
+
+      document.getElementById("userTrackInput").value = ordId;
+      trackOrderCustomer();
+    }
+
+    function trackOrderCustomer() {
+      const oid = parseInt(document.getElementById("userTrackInput").value, 10);
+      const res = document.getElementById("userTrackResult");
+      if (isNaN(oid)) {
+        res.innerHTML = `<span class="text-red-700 font-semibold">Enter a valid numeric Order ID.</span>`;
+        return;
+      }
+
+      let idx = oid % HASH_SIZE;
+      const startIdx = idx;
+      let found = null;
+
+      while (orderHashTable[idx] !== null) {
+        if (orderHashTable[idx].orderId === oid) {
+          found = orderHashTable[idx];
+          break;
+        }
+        idx = (idx + 1) % HASH_SIZE;
+        if (idx === startIdx) break;
+      }
+
+      if (!found) {
+        res.innerHTML = `<span class="text-red-700 font-semibold">Order #${oid} not found.</span>`;
+        return;
+      }
+
+      let statusLabel = "QUEUED";
+      let statusStyle = "bg-[var(--border)] text-[var(--foreground)]";
+      if (found.status === "OUT_FOR_DELIVERY") {
+        statusLabel = "OUT FOR DELIVERY";
+        statusStyle = "bg-amber-700 text-white";
+      } else if (found.status === "DELIVERED") {
+        statusLabel = "DELIVERED";
+        statusStyle = "bg-emerald-700 text-white";
+      }
+
+      const itemsSummary = found.items.map(i => `${i.qty} x ${escapeHtml(i.name)}`).join(", ");
+
+      res.innerHTML = `
+        <div class="space-y-2">
+          <div class="flex items-center justify-between border-b border-[var(--border)] pb-2">
+            <span class="font-bold text-sm text-[var(--foreground)]">Order #${found.orderId}</span>
+            <span class="px-2 py-0.5 rounded text-xs font-semibold ${statusStyle}">${statusLabel}</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div><span class="text-[var(--muted-foreground)]">Customer:</span> <span class="font-medium text-[var(--foreground)]">${escapeHtml(found.customerName)}</span></div>
+            <div><span class="text-[var(--muted-foreground)]">Tier:</span> <span class="font-medium text-[var(--foreground)]">${found.isVip ? "Express Priority" : "Standard"}</span></div>
+            <div class="sm:col-span-2"><span class="text-[var(--muted-foreground)]">Address:</span> <span class="font-medium text-[var(--foreground)]">${escapeHtml(found.deliveryAddress)}</span></div>
+            <div class="sm:col-span-2"><span class="text-[var(--muted-foreground)]">Items:</span> <span class="font-medium text-[var(--foreground)]">${itemsSummary}</span></div>
+            <div><span class="text-[var(--muted-foreground)]">Delivery Partner:</span> <span class="font-medium text-[var(--foreground)]">${escapeHtml(found.agentName)}</span></div>
+            <div><span class="text-[var(--muted-foreground)]">Total Bill:</span> <span class="mono font-bold text-[var(--foreground)]">Rs. ${found.totalAmount.toFixed(2)}</span></div>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ==================================================================================
+     * AGENTS APPOINTMENT END: STAGE 1 (DISPATCH) & STAGE 2 (DELIVERED)
+     * ================================================================================== */
+    function renderAgentPQ() {
+      const container = document.getElementById("agentPQList");
+      const badge = document.getElementById("badgeQueueCount");
+      const inlineCount = document.getElementById("countPendingInline");
+
+      inlineCount.textContent = orderPQ.length;
+
+      if (orderPQ.length > 0) {
+        badge.textContent = orderPQ.length;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
+
+      if (orderPQ.length === 0) {
+        container.innerHTML = `<p class="text-[var(--muted-foreground)] text-xs text-center py-6">No pending orders in queue.</p>`;
+        return;
+      }
+
+      container.innerHTML = orderPQ.map((ord, idx) => `
+        <div class="p-3 rounded-md border ${idx === 0 ? "border-emerald-700 bg-emerald-500/5" : "border-[var(--border)] bg-[var(--background)]"} text-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-sm text-[var(--foreground)]">#${ord.orderId}</span>
+              <span class="px-1.5 py-0.5 rounded text-xs font-semibold ${ord.isVip ? "bg-amber-700 text-white" : "bg-[var(--border)] text-[var(--foreground)]"}">
+                ${ord.isVip ? "EXPRESS" : "STANDARD"}
+              </span>
+              ${idx === 0 ? '<span class="text-xs font-bold text-emerald-700">Next for Dispatch</span>' : ''}
+            </div>
+            <div class="text-[var(--muted-foreground)] mt-1">
+              ${escapeHtml(ord.customerName)} | ${escapeHtml(ord.deliveryAddress)} (${zone_names[ord.destZone].split(':')[1].trim()})
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="mono font-bold text-[var(--foreground)] text-xs">Rs. ${ord.totalAmount.toFixed(2)}</div>
+            <div class="text-xs text-[var(--muted-foreground)]">Priority Score: ${ord.priorityScore}</div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderActiveDeliveries() {
+      const container = document.getElementById("agentActiveDeliveries");
+      const badge = document.getElementById("badgeActiveTransit");
+
+      badge.textContent = activeDeliveries.length;
+
+      if (activeDeliveries.length === 0) {
+        container.innerHTML = `<p class="text-[var(--muted-foreground)] text-xs text-center py-6">No active deliveries in transit.</p>`;
+        return;
+      }
+
+      container.innerHTML = activeDeliveries.map(ord => `
+        <div class="p-3 rounded-md border border-[var(--border)] bg-[var(--background)] text-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-sm text-[var(--foreground)]">#${ord.orderId}</span>
+              <span class="px-2 py-0.5 rounded text-xs font-semibold bg-amber-700 text-white">OUT FOR DELIVERY</span>
+              <span class="text-xs text-[var(--muted-foreground)]">Route: ${ord.deliveryDist} km</span>
+            </div>
+            <div class="text-[var(--muted-foreground)] mt-1">
+              Rider: <strong class="text-[var(--foreground)]">${escapeHtml(ord.agentName)}</strong> | Customer: <strong class="text-[var(--foreground)]">${escapeHtml(ord.customerName)}</strong>
+            </div>
+            <div class="text-xs text-[var(--foreground)] font-medium mt-1">
+              Address: ${escapeHtml(ord.deliveryAddress)} (${zone_names[ord.destZone].split(':')[1].trim()})
+            </div>
+          </div>
+          <button type="button" onclick="markOrderDelivered(${ord.orderId})" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs rounded-md shrink-0">
+            Mark Delivered
+          </button>
+        </div>
+      `).join("");
+    }
+
+    function renderAgentFleet() {
+      const hubDist = computeDijkstra(0);
+      const tbody = document.getElementById("agentFleetTable");
+      let availCount = 0;
+
+      tbody.innerHTML = agents.map(ag => {
+        if (ag.available) availCount++;
+        return `
+          <tr>
+            <td class="py-2 px-2">
+              <div class="font-semibold text-[var(--foreground)]">${escapeHtml(ag.name)}</div>
+              <div class="mono text-xs text-[var(--muted-foreground)]">ID ${ag.id}</div>
+            </td>
+            <td class="py-2 px-2 text-[var(--foreground)]">Zone ${ag.zone}</td>
+            <td class="py-2 px-2">
+              ${ag.available
+                ? '<span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/15 text-emerald-700">Available</span>'
+                : `<span class="px-2 py-0.5 rounded text-xs font-semibold bg-amber-500/15 text-amber-700">Busy (#${ag.activeOrderId})</span>`}
+            </td>
+            <td class="py-2 px-2 text-right font-semibold text-[var(--foreground)]">${ag.completed}</td>
+          </tr>
+        `;
+      }).join("");
+
+      document.getElementById("countAvailInline").textContent = `${availCount}/${agents.length}`;
+
+      const distGrid = document.getElementById("dijkstraDistGrid");
+      distGrid.innerHTML = [1, 2, 3, 4, 5].map(z => `
+        <div class="p-2 rounded-md border border-[var(--border)] bg-[var(--background)] flex justify-between items-center">
+          <span class="text-[var(--muted-foreground)]">${zone_names[z].split(':')[1].trim()} (Z${z})</span>
+          <span class="mono font-semibold text-[var(--foreground)]">${hubDist[z]} km</span>
+        </div>
+      `).join("");
+    }
+
+    function dispatchNextOrder() {
+      if (orderPQ.length === 0) {
+        showToast("No pending orders in the dispatch queue.", false);
+        return;
+      }
+
+      const hubDist = computeDijkstra(0);
+      let bestAgentIdx = -1;
+      let minPickupDist = INF;
+
+      for (let i = 0; i < agents.length; i++) {
+        if (agents[i].available) {
+          const agentToHub = hubDist[agents[i].zone];
+          if (
+            agentToHub < minPickupDist ||
+            (agentToHub === minPickupDist && bestAgentIdx !== -1 && agents[i].completed < agents[bestAgentIdx].completed)
+          ) {
+            minPickupDist = agentToHub;
+            bestAgentIdx = i;
+          }
+        }
+      }
+
+      if (bestAgentIdx === -1) {
+        showToast("All riders are currently out on delivery.", false);
+        return;
+      }
+
+      const ord = orderPQ.shift();
+      const ag = agents[bestAgentIdx];
+      const totalTripKm = minPickupDist + hubDist[ord.destZone];
+
+      ord.agentId = ag.id;
+      ord.agentName = ag.name;
+      ord.deliveryDist = totalTripKm;
+      ord.status = "OUT_FOR_DELIVERY";
+
+      ag.available = false;
+      ag.activeOrderId = ord.orderId;
+
+      activeDeliveries.push(ord);
+
+      renderAgentPQ();
+      renderActiveDeliveries();
+      renderAgentFleet();
+
+      if (parseInt(document.getElementById("userTrackInput").value, 10) === ord.orderId) {
+        trackOrderCustomer();
+      }
+
+      showToast(`Order #${ord.orderId} dispatched to ${ag.name} (${totalTripKm} km route).`);
+    }
+
+    function markOrderDelivered(orderId) {
+      const idx = activeDeliveries.findIndex(o => o.orderId === orderId);
+      if (idx === -1) return;
+
+      const ord = activeDeliveries.splice(idx, 1)[0];
+      ord.status = "DELIVERED";
+
+      const ag = agents.find(a => a.id === ord.agentId);
+      if (ag) {
+        ag.zone = ord.destZone;
+        ag.available = true;
+        ag.activeOrderId = null;
+        ag.completed++;
+      }
+
+      orderHistoryDLL.push(ord);
+
+      renderActiveDeliveries();
+      renderAgentFleet();
+      renderAdminHistory(historyReverse);
+
+      if (parseInt(document.getElementById("userTrackInput").value, 10) === orderId) {
+        trackOrderCustomer();
+      }
+
+      showToast(`Order #${ord.orderId} marked delivered by ${ord.agentName}.`);
+    }
+
+    /* ==================================================================================
+     * ADMIN END: MENU CATALOG BST & DELIVERED ORDER HISTORY
+     * ================================================================================== */
+    function adminAddDish(event) {
+      event.preventDefault();
+      const id = parseInt(document.getElementById("adminItemId").value, 10);
+      const name = document.getElementById("adminItemName").value.trim();
+      const cat = document.getElementById("adminItemCat").value.trim();
+      const price = parseFloat(document.getElementById("adminItemPrice").value);
+
+      if (isNaN(id) || id <= 0) {
+        showToast("Item ID must be a positive number.", false);
+        return;
+      }
+      if (isNaN(price) || price <= 0) {
+        showToast("Price must be greater than zero.", false);
+        return;
+      }
+      if (!name || !cat) {
+        showToast("Dish name and category are required.", false);
+        return;
+      }
+      if (menu_items.some(m => m.id === id)) {
+        showToast(`Item ID ${id} already exists in the catalog.`, false);
+        return;
+      }
+
+      menu_items.push({ id, name, cat, price });
+      menu_items.sort((a, b) => a.id - b.id);
+
+      document.getElementById("adminItemId").value = "";
+      document.getElementById("adminItemName").value = "";
+      document.getElementById("adminItemCat").value = "";
+      document.getElementById("adminItemPrice").value = "";
+
+      renderUserMenu(document.getElementById("menuFilter").value);
+      renderAdminBstList();
+      showToast(`Added "${name}" (#${id}) to menu catalog.`);
+    }
+
+    function renderAdminBstList() {
+      const container = document.getElementById("adminBstList");
+      container.innerHTML = menu_items.map(m => `
+        <div class="flex justify-between items-center p-2 rounded-md border border-[var(--border)] bg-[var(--background)]">
+          <div class="flex items-center gap-2">
+            <span class="mono font-semibold text-[var(--foreground)]">#${m.id}</span>
+            <span class="font-medium text-[var(--foreground)]">${escapeHtml(m.name)}</span>
+            <span class="text-xs text-[var(--muted-foreground)]">(${escapeHtml(m.cat)})</span>
+          </div>
+          <span class="mono text-[var(--foreground)] font-semibold">Rs. ${m.price.toFixed(2)}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderAdminHistory(reverse = false) {
+      historyReverse = reverse;
+      const container = document.getElementById("adminHistoryList");
+      const btnFwd = document.getElementById("btnAdminHistFwd");
+      const btnRev = document.getElementById("btnAdminHistRev");
+      const badge = document.getElementById("badgeHistoryCount");
+
+      if (orderHistoryDLL.length > 0) {
+        badge.textContent = orderHistoryDLL.length;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
+
+      if (reverse) {
+        btnRev.className = "px-2.5 py-1 text-xs rounded-md font-medium bg-[var(--foreground)] text-[var(--background)]";
+        btnFwd.className = "px-2.5 py-1 text-xs rounded-md font-medium border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
+      } else {
+        btnFwd.className = "px-2.5 py-1 text-xs rounded-md font-medium bg-[var(--foreground)] text-[var(--background)]";
+        btnRev.className = "px-2.5 py-1 text-xs rounded-md font-medium border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
+      }
+
+      if (orderHistoryDLL.length === 0) {
+        container.innerHTML = `<p class="text-[var(--muted-foreground)] text-xs text-center py-12">No completed deliveries recorded yet.</p>`;
+        return;
+      }
+
+      const list = [...orderHistoryDLL];
+      if (reverse) list.reverse();
+
+      container.innerHTML = list.map(o => `
+        <div class="p-3 border border-[var(--border)] rounded-md bg-[var(--background)] text-xs flex justify-between items-start gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-sm text-[var(--foreground)]">#${o.orderId}</span>
+              <span class="px-1.5 py-0.5 rounded text-xs font-semibold ${o.isVip ? "bg-amber-700 text-white" : "bg-[var(--border)] text-[var(--foreground)]"}">${o.isVip ? "EXPRESS" : "STANDARD"}</span>
+              <span class="font-medium text-[var(--foreground)]">${escapeHtml(o.customerName)}</span>
+            </div>
+            <div class="text-xs text-[var(--muted-foreground)] mt-1">
+              Partner: <strong class="text-[var(--foreground)]">${escapeHtml(o.agentName)}</strong> | Address: <span class="text-[var(--foreground)]">${escapeHtml(o.deliveryAddress)}</span> | Distance: ${o.deliveryDist} km
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="mono font-bold text-[var(--foreground)]">Rs. ${o.totalAmount.toFixed(2)}</div>
+            <span class="text-xs font-semibold text-emerald-700">DELIVERED</span>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function resetSystem() {
+      initDefaultData();
+      document.getElementById("menuFilter").value = "";
+      document.getElementById("userCustName").value = "";
+      document.getElementById("userAddress").value = "";
+      document.getElementById("userVipToggle").checked = false;
+      document.getElementById("userTrackInput").value = "";
+      document.getElementById("userTrackResult").innerHTML = "Enter an Order ID above to view its status.";
+
+      renderUserMenu();
+      renderUserCart();
+      renderAgentPQ();
+      renderActiveDeliveries();
+      renderAgentFleet();
+      renderAdminBstList();
+      renderAdminHistory(false);
+      hideToast();
+      switchPage('user');
+    }
+
+    window.onload = () => {
+      initDefaultData();
+      renderUserMenu();
+      renderUserCart();
+      renderAgentPQ();
+      renderActiveDeliveries();
+      renderAgentFleet();
+      renderAdminBstList();
+      renderAdminHistory(false);
+    };
+  </script>
+</body>
+</html>
